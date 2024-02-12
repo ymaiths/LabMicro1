@@ -52,6 +52,10 @@ uint16_t roundtim3 = 0;
 uint32_t rawtim2 = 0;
 uint32_t roundtim2 = 0;
 uint16_t poten[300];
+uint16_t avPoten1 ;
+uint16_t avPoten2 ;
+uint16_t avPoten3 ;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,6 +66,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
+void Average();
 
 /* USER CODE END PFP */
 
@@ -118,6 +123,10 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  rawtim2 = __HAL_TIM_GET_COUNTER(&htim2);
 	  rawtim3 = __HAL_TIM_GET_COUNTER(&htim3);
+	  HAL_Delay(1000);
+
+	  Average();
+
   }
   /* USER CODE END 3 */
 }
@@ -414,6 +423,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 		roundtim2 = roundtim2 + 1;
 	}
+}
+
+void Average(){
+	uint16_t sumPoten[3] = {0};
+	for (int i = 0;i<297;i+3){
+		sumPoten[0] = sumPoten[0]+poten[i];
+		sumPoten[1] = sumPoten[1]+poten[i+1];
+		sumPoten[2] = sumPoten[2]+poten[i+2];
+	}
+	avPoten1 = sumPoten[0]/100;
+	avPoten2 = sumPoten[1]/100;
+	avPoten3 = sumPoten[2]/100;
+
 }
 /* USER CODE END 4 */
 
