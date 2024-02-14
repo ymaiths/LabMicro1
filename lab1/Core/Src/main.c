@@ -45,17 +45,22 @@ DMA_HandleTypeDef hdma_adc1;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 uint16_t rawtim3 = 0;
 uint16_t roundtim3 = 0;
 uint32_t rawtim2 = 0;
 uint32_t roundtim2 = -1;
+
 uint16_t poten[300];
 uint16_t avPoten1 = 0;
 uint16_t avPoten2 = 0;
 uint16_t avPoten3 = 0;
 uint64_t sumTim2 = 0;
+
+float percentPoten1 = 0;
+
 //uint64_t sumPoten[3] = {0};
 
 /* USER CODE END PV */
@@ -67,8 +72,10 @@ static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 void Average();
+void Servo();
 
 /* USER CODE END PFP */
 
@@ -109,11 +116,16 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM3_Init();
   MX_TIM2_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   //HAL_TIM_Base_Start_IT(&htim3);
+
   HAL_ADC_Start_DMA(&hadc1, poten, 300);
   HAL_TIM_Base_Start(&htim3);
+
+  HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -128,6 +140,9 @@ int main(void)
 	  //HAL_Delay(1000);
 	  sumTim2 = rawtim2+(roundtim2*(4294967295));
 	  Average();
+
+	  Servo();
+	  HAL_Delay(500);
 
   }
   /* USER CODE END 3 */
@@ -356,6 +371,65 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 149;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 9999;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -436,6 +510,19 @@ void Average(){
 	avPoten3 = sumPoten[2]/100;
 }
 
+void Servo(){
+	percentPoten1 = (avPoten1/4095)*100;
+	if (percentPoten1 <= 25){
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 500);
+	} else if( percentPoten1 <= 50 && percentPoten1 >= 25 ){
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, ((avPoten2/4095)*2000)+500);
+	} else if( percentPoten1 <= 75 && percentPoten1 >= 50 ){
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, ((avPoten3/4095)*2000)+500);
+	} else {
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 2500);
+	}
+
+}
 /* USER CODE END 4 */
 
 /**
