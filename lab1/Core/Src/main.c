@@ -50,11 +50,13 @@ TIM_HandleTypeDef htim3;
 uint16_t rawtim3 = 0;
 uint16_t roundtim3 = 0;
 uint32_t rawtim2 = 0;
-uint32_t roundtim2 = 0;
+uint32_t roundtim2 = -1;
 uint16_t poten[300];
-uint16_t avPoten1 ;
-uint16_t avPoten2 ;
-uint16_t avPoten3 ;
+uint16_t avPoten1 = 0;
+uint16_t avPoten2 = 0;
+uint16_t avPoten3 = 0;
+uint64_t sumTim2 = 0;
+//uint64_t sumPoten[3] = {0};
 
 /* USER CODE END PV */
 
@@ -123,8 +125,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  rawtim2 = __HAL_TIM_GET_COUNTER(&htim2);
 	  rawtim3 = __HAL_TIM_GET_COUNTER(&htim3);
-	  HAL_Delay(1000);
-
+	  //HAL_Delay(1000);
+	  sumTim2 = rawtim2+(roundtim2*(4294967295));
 	  Average();
 
   }
@@ -367,9 +369,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-  /* DMAMUX_OVR_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMAMUX_OVR_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMAMUX_OVR_IRQn);
 
 }
 
@@ -426,8 +425,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 void Average(){
-	uint16_t sumPoten[3] = {0};
-	for (int i = 0;i<297;i+3){
+	uint64_t sumPoten[3] = {0};
+	for (int i = 0;i<297;i+=3){
 		sumPoten[0] = sumPoten[0]+poten[i];
 		sumPoten[1] = sumPoten[1]+poten[i+1];
 		sumPoten[2] = sumPoten[2]+poten[i+2];
@@ -435,8 +434,8 @@ void Average(){
 	avPoten1 = sumPoten[0]/100;
 	avPoten2 = sumPoten[1]/100;
 	avPoten3 = sumPoten[2]/100;
-
 }
+
 /* USER CODE END 4 */
 
 /**
