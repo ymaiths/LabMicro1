@@ -60,8 +60,7 @@ uint16_t avPoten3 = 0;
 uint64_t sumTim2 = 0;
 
 uint16_t percentPoten1 = 0;
-int check=0;
-double a ;
+double pulse = 0 ;
 
 //uint64_t sumPoten[3] = {0};
 
@@ -515,18 +514,17 @@ void Average(){
 void Servo(){
 	percentPoten1 = avPoten1*100/4095;
 	if (percentPoten1 <= 25){
-	  check = 1;
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 500);
-	} else if( percentPoten1 <= 50 && percentPoten1 >= 25 ){
-		check = 2;
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (avPoten2*2000/4095)+500);
+	  pulse = 500;
+	  } else if( percentPoten1 <= 50 && percentPoten1 >= 25 ){
+		  pulse = (avPoten2*2000/4095)+500;
 	} else if( percentPoten1 <= 75 && percentPoten1 >= 50 ){
-		check = 3;
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (avPoten3*2000/4095)+500);
+		pulse = (avPoten3*2000/4095)+500;
 	} else {
-		check = 4;
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 2500);
+		pulse = 2500;
 	}
+
+
+	  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulse);
 
 }
 /* USER CODE END 4 */
